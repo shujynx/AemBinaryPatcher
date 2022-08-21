@@ -9,7 +9,8 @@ namespace AemBinaryPatcher
         public static string path;
         public static string ogFile;
         public static string modFile;
-        public static long ogLenght;
+        public static long ogLength;
+        public static long modLength;
 
         public static string patchString;
         public static int offset = 0;
@@ -28,8 +29,11 @@ namespace AemBinaryPatcher
                 ogFile = args[1];
                 modFile = args[2];
 
+                FileStream modStream = File.OpenRead(modFile);
+                modLength = modStream.Length;
+                modStream.Close();
                 FileStream ogStream = File.OpenRead(ogFile);
-                ogLenght = ogStream.Length;
+                ogLength = ogStream.Length;
                 ogStream.Close();
                 #endregion
                 #region PreliminaryActions
@@ -41,17 +45,17 @@ namespace AemBinaryPatcher
                 patchFileStream.Close();
                 #endregion
                 #region WritingPatch
-                while (offset < ogLenght)
+                while (offset < modLength)
                 {
                     FileStream originalFileStream = File.OpenRead(ogFile);
                     FileStream modifiedFileStream = File.OpenRead(modFile);
                     BinaryReader originalFile = new BinaryReader(originalFileStream);
                     BinaryReader modifiedFile = new BinaryReader(modifiedFileStream);
 
-                    originalFile.BaseStream.Seek(offset, SeekOrigin.Begin);
+                    if(offset < ogLength) originalFile.BaseStream.Seek(offset, SeekOrigin.Begin);
                     modifiedFile.BaseStream.Seek(offset, SeekOrigin.Begin);
 
-                    if (originalFile.ReadByte() != modifiedFile.ReadByte())
+                    if (originalFile.ReadByte() != modifiedFile.ReadByte() || offset >= ogLength)
                     {
                         modifiedFile.BaseStream.Seek(offset, SeekOrigin.Begin);
                         patchString += $"    {{\n      \"file\": \"{path}\",\n      \"offset\": {offset},\n      \"data\": \"{modifiedFile.ReadByte()}\"\n    }},\n";
