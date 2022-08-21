@@ -1,24 +1,25 @@
-name: Automatic Build
+name: Build Artifacts
 
-on: [push]
+on:
+  push:
+    branches: [ main ]
+  pull_requests:
+    branches: [ main ]
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        dotnet-version: [ '5.0.x' ]
 
     steps:
       - uses: actions/checkout@v3
-      - name: Setup .NET Core SDK ${{ matrix.dotnet-version }}
+      - name: Setup .NET SDK
         uses: actions/setup-dotnet@v2
         with:
-          dotnet-version: ${{ matrix.dotnet-version }}
+          dotnet-version: 5.0.x
       - name: Install dependencies
         run: dotnet restore
       - name: Build
-        run: dotnet build --configuration Release --no-restore
-      - name: Test
-        run: dotnet test --no-restore --verbosity normal
+        run: dotnet build --no-restore
+      - name: Publish
+        run: dotnet publish AemBinaryPatcher.csproj -c Release -o release --nologo
